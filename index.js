@@ -12,6 +12,9 @@ const PORT = 5555
 const noop = () => {}
 
 const defaults = {
+	group: GROUP,
+	interface: INTERFACE,
+	port: PORT,
 	pack: (content, from) => {
 		return Buffer.from(JSON.stringify({content, from}), 'utf8')
 	},
@@ -32,7 +35,7 @@ const createChannel = (opt = {}) => {
 
 	const channel = new EventEmitter()
 	const id = channel.id = opt.name || randomString(8)
-	let me = {address: GROUP, port: PORT}
+	let me = {address: opt.group, port: opt.port}
 
 	const onError = (err) => {
 		if (err.code === 'EACCESS' || err.core === 'EADDRINUSE') channel.emit('error', err)
@@ -43,7 +46,7 @@ const createChannel = (opt = {}) => {
 		me = socket.address()
 
 		try {
-			socket.addMembership(GROUP, INTERFACE)
+			socket.addMembership(opt.group, opt.interface)
 		} catch (err) {
 			channel.emit('error', err)
 		}
@@ -81,9 +84,9 @@ const createChannel = (opt = {}) => {
 
 	socket.on('error', onError)
 	socket.on('message', onMessage)
-	socket.bind(PORT, INTERFACE, onListening)
+	socket.bind(opt.port, opt.interface, onListening)
 
-	channel.send = createSend(GROUP, me.port)
+	channel.send = createSend(opt.group, me.port)
 	return channel
 }
 
